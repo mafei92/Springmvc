@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.dfc.springmvc.dao.MenuDao">
+
+	<resultMap id="menu" type="com.dfc.springmvc.pojo.Menu">
+		<id column="menu_id" property="menuId" jdbcType="VARCHAR" />
+		<result column="menu_name" property="menuName" jdbcType="VARCHAR" />
+		<result column="menu_uri" property="menuUri" jdbcType="VARCHAR" />
+		<result column="menu_order" property="menuOrder" jdbcType="DECIMAL" />
+		<result column="menu_desc" property="menuDesc" jdbcType="VARCHAR" />
+		<result column="menu_type" property="menuType" jdbcType="VARCHAR" />
+	</resultMap>
+
+	<sql id="baseSql">
+		menu_id,
+		menu_name,
+		menu_uri,
+		menu_order,
+		menu_desc,
+		menu_type
+	</sql>
+
+	<select id="getUserMenus" parameterType="java.lang.String" resultMap="menu">
+		SELECT 
+		   m.menu_id, m.menu_name, m.menu_uri
+		FROM
+		   mvc_user_info u 
+		   LEFT JOIN mvc_user_role ur 
+		      ON u.user_id = ur.user_id 
+		   LEFT JOIN mvc_role r 
+		      ON ur.role_id = r.role_id 
+		   LEFT JOIN mvc_role_menu rm 
+		      ON rm.role_id = r.role_id 
+		   LEFT JOIN mvc_menu m 
+		      ON rm.menu_id = m.menu_id 
+		WHERE u.user_id = #{userId}
+		   AND m.menu_type = 'system'
+		ORDER BY m.menu_order
+	</select>
+
+	<select id="queryAllMenus" parameterType="com.dfc.springmvc.pojo.Menu" resultMap="menu">
+		SELECT
+		<include refid="baseSql" />
+		FROM mvc_menu m
+		<where>
+			<if test="menuName != null and menuName != ''">
+				AND m.menu_name LIKE CONCAT('%',#{menuName},'%')
+			</if>
+		</where>
+		ORDER BY m.menu_order
+	</select>
+	
+	<select id="getTotalRecords" parameterType="com.dfc.springmvc.pojo.Menu"
+		resultType="java.lang.Integer">
+		SELECT count(*) FROM mvc_menu m
+		<where>
+			<if test="menuName != null and menuName != ''">
+				AND m.menu_name LIKE CONCAT('%',#{menuName},'%')
+			</if>
+		</where>
+	</select>
+	
+	<select id="querySystemMenus" parameterType="com.dfc.springmvc.pojo.Menu" resultMap="menu">
+		SELECT
+		<include refid="baseSql" />
+		FROM mvc_menu m
+		<where>
+			m.menu_type = 'system'
+			<if test="menuName != null and menuName != ''">
+				AND m.menu_name LIKE CONCAT('%',#{menuName},'%')
+			</if>
+		</where>
+		ORDER BY m.menu_order
+	</select>
+	
+	<select id="getSystemRecords" parameterType="com.dfc.springmvc.pojo.Menu"
+		resultType="java.lang.Integer">
+		SELECT count(*) FROM mvc_menu m
+		<where>
+			m.menu_type = 'system'
+			<if test="menuName != null and menuName != ''">
+				AND m.menu_name LIKE CONCAT('%',#{menuName},'%')
+			</if>
+		</where>
+	</select>
+
+	<select id="getMenu" parameterType="String" resultMap="menu">
+		SELECT
+		<include refid="baseSql" />
+		FROM mvc_menu m
+		WHERE m.menu_id = #{menuId}
+	</select>
+	
+	<select id="getMenusByMenuType" parameterType="String" resultMap="menu">
+		SELECT <include refid="baseSql" />
+		FROM mvc_menu
+		<where>
+			<if test="menuType != null">
+			    AND menu_type = #{menuType, jdbcType=VARCHAR}
+			</if>
+		</where>
+		ORDER BY menu_order
+	</select>
+
+	<select id="getMaxMenuOrder" resultType="java.lang.Integer">
+		SELECT MAX(m.menu_order) FROM mvc_menu m
+	</select>
+
+	<insert id="saveMenu" parameterType="com.dfc.springmvc.pojo.Menu">
+		<selectKey resultType="java.lang.String" keyProperty="menuId"
+			order="BEFORE">
+			SELECT REPLACE(UUID(),'-','') FROM DUAL
+		</selectKey>
+		INSERT INTO mvc_menu
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="menuName != null">
+				menu_id,
+			</if>
+			<if test="menuName != null">
+				menu_name,
+			</if>
+			<if test="menuUri != null">
+				menu_uri,
+			</if>
+			<if test="menuOrder != null">
+				menu_order,
+			</if>
+			<if test="menuDesc != null">
+				menu_desc,
+			</if>
+			<if test="menuType != null">
+				menu_type,
+			</if>
+		</trim>
+		VALUES
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="menuId != null">
+				#{menuId, jdbcType=VARCHAR},
+			</if>
+			<if test="menuName != null">
+				#{menuName, jdbcType=VARCHAR},
+			</if>
+			<if test="menuUri != null">
+				#{menuUri, jdbcType=VARCHAR},
+			</if>
+			<if test="menuOrder != null">
+				#{menuOrder, jdbcType=DECIMAL},
+			</if>
+			<if test="menuDesc != null">
+				#{menuDesc, jdbcType=VARCHAR},
+			</if>
+			<if test="menuType != null">
+				#{menuType, jdbcType=VARCHAR},
+			</if>
+		</trim>
+	</insert>
+
+	<update id="updateMenu" parameterType="com.dfc.springmvc.pojo.Menu">
+		UPDATE mvc_menu
+		<set>
+			<if test="menuName != null">
+				menu_name = #{menuName, jdbcType=VARCHAR},
+			</if>
+			<if test="menuUri != null">
+				menu_uri = #{menuUri, jdbcType=VARCHAR},
+			</if>
+			<if test="menuOrder != null">
+				menu_order = #{menuOrder, jdbcType=DECIMAL},
+			</if>
+			<if test="menuDesc != null">
+				menu_desc = #{menuDesc, jdbcType=VARCHAR},
+			</if>
+			<if test="menuType != null">
+				menu_type = #{menuType, jdbcType=VARCHAR},
+			</if>
+		</set>
+		WHERE menu_id = #{menuId, jdbcType=VARCHAR}
+	</update>
+
+	<delete id="deleteMenu" parameterType="String">
+		DELETE FROM mvc_menu WHERE menu_id = #{menuId}
+	</delete>
+	
+	<select id="getMenuTypes" resultType="java.lang.String">
+		SELECT DISTINCT menu_type AS menuType FROM mvc_menu ORDER BY menu_type
+	</select>
+
+</mapper>

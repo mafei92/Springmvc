@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+						http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+						http://www.springframework.org/schema/context
+						http://www.springframework.org/schema/context/spring-context.xsd
+						http://www.springframework.org/schema/aop
+						http://www.springframework.org/schema/aop/spring-aop-4.1.xsd
+						http://www.springframework.org/schema/tx
+						http://www.springframework.org/schema/tx/spring-tx-4.1.xsd
+						http://www.springframework.org/schema/task
+						http://www.springframework.org/schema/task/spring-task-4.1.xsd
+						http://www.springframework.org/schema/util
+						http://www.springframework.org/schema/util/spring-util.xsd"
+						default-autowire="byName">
+
+	<bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+		<property name="realm" ref="shiroDataBaseRealm" />
+		<!-- <property name="sessionMode" value="native" /> -->
+		<!-- <property name="cacheManager" ref="shiroCacheManager" /> -->
+	</bean>
+
+	<bean id="shiroDataBaseRealm" class="com.dfc.springmvc.common.ShiroDataBaseRealm"/>
+
+	<!-- 配置shiro的过滤器工厂类，id- shiroFilter要和我们在web.xml中配置的过滤器一致 -->
+	<bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+		<!-- shiro的核心安全接口 权限管理器 -->
+		<property name="securityManager" ref="securityManager" />
+		<!-- 要求登录时的链接 -->
+		<property name="loginUrl" value="/pages/login.jsp" />
+		<!-- 登陆成功后要跳转的连接 -->
+		<property name="successUrl" value="/pages/main.jsp" />
+		<!-- 未授权时要跳转的连接 -->
+		<property name="unauthorizedUrl" value="/pages/404.jsp" />
+		<!-- shiro连接约束配置,在这里使用自定义的动态获取资源类 -->
+		<property name="filterChainDefinitionMap" ref="chainDefinitionSectionMetaSource" />
+	</bean>
+	<!--自定义filterChainDefinitionMap -->
+	<bean id="chainDefinitionSectionMetaSource" class="com.dfc.springmvc.common.ChainDefinitionSectionMetaSource">
+		<property name="filterChainDefinitions">
+			<value>
+				# js、css、图片等
+				/css/** = anon
+				/images/** = anon
+				/js/** = anon
+				/themes/** = anon
+				/common/login.do = anon
+				/common/toMain.do = anon
+			</value>
+		</property>
+	</bean>
+
+	<!--shiro缓存管理器 -->
+	<bean id="cacheManager" class="org.apache.shiro.cache.MemoryConstrainedCacheManager" />
+	<bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor" />
+
+</beans>
